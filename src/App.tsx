@@ -7,16 +7,21 @@ import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { API_BASE_URL } from '../config.ts';
 
+// 定義使用者資料介面
+interface UserProfile {
+  name: string;
+  email: string;
+  picture: string;
+}
+
 export default function App() {
   const [currentView, setCurrentView] = useState('cases'); 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [selectedCrate, setSelectedCrate] = useState<Crate | null>(null);
-  
   const [crates, setCrates] = useState<Crate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-
-  // 檢查登入資訊 
+  // 1. 初始化檢查 localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem('cs_user');
     if (storedUser) {
@@ -29,7 +34,7 @@ export default function App() {
     }
   }, []);
 
-  // 載入真實箱子資料
+  // 2. 載入箱子資料 (維持不變)
   useEffect(() => {
     const fetchCrates = async () => {
       try {
@@ -48,26 +53,34 @@ export default function App() {
     fetchCrates();
   }, []);
 
-  // 1. 定義登入邏輯 
+  // 3. ★ 修正：真正的登入邏輯 (移到這裡)
   const googleLogin = useGoogleLogin({
      onSuccess: async (tokenResponse) => {
-        console.log("Login Success", tokenResponse);
-        const newUser = {
-            name: "Test User", 
-            email: "test@example.com",
-            picture: "" 
-        };
-        setUser(newUser);
-        // 儲存到瀏覽器
-        localStorage.setItem('cs_user', JSON.stringify(newUser));
+        try {
+            // 使用 Token 換取真正的 Google 使用者資料
+            const userInfo = await axios.get(
+                'https://www.googleapis.com/oauth2/v3/userinfo',
+                { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
+            );
+            
+            const newUser = userInfo.data;
+            console.log("Login Success, User:", newUser);
+            
+            setUser(newUser);
+            // 存入 localStorage 以便重整後保持登入
+            localStorage.setItem('cs_user', JSON.stringify(newUser));
+        } catch (error) {
+            console.error("Failed to fetch user info", error);
+        }
      },
      onError: () => console.log('Login Failed'),
   });
 
+  // 4. 定義登出邏輯
   const logout = () => {
       setUser(null);
       localStorage.removeItem('cs_user');
-      setCurrentView('cases');
+      setCurrentView('cases'); // 登出後回到首頁
   };
 
   const handleCrateClick = (crate: Crate) => {
@@ -86,7 +99,6 @@ export default function App() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
         {currentView === 'cases' && (
             <>
                 <h2 className="text-2xl font-bold mb-6 text-yellow-400">Select Case</h2>
@@ -129,7 +141,6 @@ export default function App() {
                 onBack={() => setCurrentView('cases')} 
             />
         )}
-
       </main>
     </div>
   );

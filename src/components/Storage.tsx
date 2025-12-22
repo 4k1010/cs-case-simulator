@@ -44,7 +44,10 @@ export default function Storage({ user, login }: StorageProps) {
       if (!user) return;
       setLoading(true);
       try {
-        const userId = user.name || "TEST_USER"; 
+        const userId = user.email || user.name || "TEST_USER"; 
+        
+        console.log("Fetching inventory for:", userId); 
+
         const res = await axios.get(`${API_BASE_URL}/api/inventory?userId=${userId}`);
         setInventory(res.data);
       } catch (error) {
@@ -61,7 +64,7 @@ export default function Storage({ user, login }: StorageProps) {
     if (!confirm("Are you sure you want to clear your ENTIRE inventory?")) return;
     setClearing(true);
     try {
-        const userId = user?.name || "TEST_USER";
+        const userId = user?.email || user?.name || "TEST_USER";
         await axios.delete(`${API_BASE_URL}/api/inventory`, { data: { userId } });
         setInventory([]);
     } catch (error) {
