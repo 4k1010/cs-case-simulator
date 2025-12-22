@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { type Crate, type Skin } from "../types";
 import RollingAnimation from "./RollingAnimation";
+import { API_BASE_URL } from '../../config';
 
 interface Props {
   crate: Crate;
@@ -157,7 +158,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
         const minAnimationTime = new Promise(resolve => setTimeout(resolve, 2650));
         
         const userId = user?.name || "TEST_USER";
-        const apiCall = fetch('/api/open', {
+        const apiCall = fetch('${API_BASE_URL}/api/open', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 

@@ -5,6 +5,7 @@ import OpeningView from "./components/OpeningView";
 import { type Crate } from "./types";
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
+import { API_BASE_URL } from '../config.ts';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('cases'); 
@@ -32,7 +33,7 @@ export default function App() {
   useEffect(() => {
     const fetchCrates = async () => {
       try {
-        const res = await axios.get('/api/crates');
+        const res = await axios.get(`${API_BASE_URL}/api/crates`);
         const formattedData = res.data.map((item: any) => ({
             ...item,
             id: item._id, 

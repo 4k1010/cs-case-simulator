@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { type Skin } from "../types"; 
+import { API_BASE_URL } from '../../config.ts';
 
 interface RealInventoryItem {
   inventoryId: string;
@@ -45,7 +46,7 @@ export default function Storage({ user, login }: StorageProps) {
       setLoading(true);
       try {
         const userId = user.name || "TEST_USER"; 
-        const res = await axios.get(`/api/inventory?userId=${userId}`);
+        const res = await axios.get(`${API_BASE_URL}/api/inventory?userId=${userId}`);
         setInventory(res.data);
       } catch (error) {
         console.error("Failed to load inventory", error);
@@ -62,7 +63,7 @@ export default function Storage({ user, login }: StorageProps) {
     setClearing(true);
     try {
         const userId = user?.name || "TEST_USER";
-        await axios.delete('/api/inventory', { data: { userId } });
+        await axios.delete('${API_BASE_URL}/api/inventory', { data: { userId } });
         setInventory([]);
     } catch (error) {
         alert("Failed to clear inventory");
