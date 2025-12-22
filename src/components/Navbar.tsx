@@ -1,4 +1,3 @@
-// 移除 axios, useGoogleLogin, useState (這些都交給 App 處理了)
 interface UserProfile {
   name: string;
   picture: string;
@@ -13,7 +12,6 @@ interface NavbarProps {
   setView: (view: string) => void;
 }
 
-// ★ 修正重點：這裡要解構出 user, login, logout
 export default function Navbar({ user, login, logout, currentView, setView }: NavbarProps) {
     
     return (
