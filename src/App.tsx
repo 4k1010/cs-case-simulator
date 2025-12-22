@@ -34,7 +34,7 @@ export default function App() {
     }
   }, []);
 
-  // 2. 載入箱子資料 (維持不變)
+  // 2. 載入箱子資料 
   useEffect(() => {
     const fetchCrates = async () => {
       try {
@@ -53,11 +53,10 @@ export default function App() {
     fetchCrates();
   }, []);
 
-  // 3. ★ 修正：真正的登入邏輯 (移到這裡)
+  // login
   const googleLogin = useGoogleLogin({
      onSuccess: async (tokenResponse) => {
         try {
-            // 使用 Token 換取真正的 Google 使用者資料
             const userInfo = await axios.get(
                 'https://www.googleapis.com/oauth2/v3/userinfo',
                 { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
@@ -67,7 +66,7 @@ export default function App() {
             console.log("Login Success, User:", newUser);
             
             setUser(newUser);
-            // 存入 localStorage 以便重整後保持登入
+            // 存入 localStorage
             localStorage.setItem('cs_user', JSON.stringify(newUser));
         } catch (error) {
             console.error("Failed to fetch user info", error);

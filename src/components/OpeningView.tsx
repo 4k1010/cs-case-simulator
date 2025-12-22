@@ -166,7 +166,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
     try {
         const minAnimationTime = new Promise(resolve => setTimeout(resolve, 2650));
         
-        const userId = user?.name || "TEST_USER";
+        const userId = user?.email || "TEST_USER";
          
         const apiCall = fetch(`${API_BASE_URL}/api/open`, {
             method: 'POST',
