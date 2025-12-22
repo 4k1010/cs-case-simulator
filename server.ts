@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Skin from './src/models/Skin.ts';
 import Crate from './src/models/Crate.ts';
-import Inventory from './src/models/Inventory.ts'; // ✅ 新增引入
+import Inventory from './src/models/Inventory.ts'; 
 
 // 載入環境變數
 dotenv.config({ path: '.env.local' });
@@ -37,9 +37,7 @@ app.get('/api/crates', async (req, res) => {
 
 app.post('/api/open', async (req, res) => {
   try {
-    const { crateId, userId } = req.body; // ✅ 接收 userId
-
-    // 為了相容，如果前端沒傳 userId，給個預設值
+    const { crateId, userId } = req.body; 
     const targetUserId = userId || "TEST_USER"; 
 
     let crate = await Crate.findOne({ _id: crateId }).populate('contains');
@@ -50,7 +48,7 @@ app.post('/api/open', async (req, res) => {
         return;
     }
 
-    // --- 機率與抽獎邏輯 (保持不變) ---
+    // --- 機率與抽獎邏輯  ---
     const isGoldTest = Math.random() < 0.99; 
     const targetRarity = isGoldTest ? 'gold' : 'blue';
 
@@ -71,7 +69,7 @@ app.post('/api/open', async (req, res) => {
     const wonItem = pool[Math.floor(Math.random() * pool.length)];
     const wear = Math.random() * (wonItem.maxFloat - wonItem.minFloat) + wonItem.minFloat;
 
-    // --- ✅ 新增：將結果存入 Inventory ---
+    // 結果存入 Inventory 
     if (wonItem && wonItem._id) {
         await Inventory.create({
             userId: targetUserId,
@@ -99,7 +97,7 @@ app.post('/api/open', async (req, res) => {
   }
 });
 
-// ✅ 新增：取得庫存 API
+// 取得庫存 API
 app.get('/api/inventory', async (req, res) => {
     try {
         const { userId } = req.query;
@@ -129,7 +127,7 @@ app.get('/api/inventory', async (req, res) => {
     }
 });
 
-// ✅ 新增：清空庫存 API
+// 清空庫存 API
 app.delete('/api/inventory', async (req, res) => {
     try {
         const { userId } = req.body;

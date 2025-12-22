@@ -431,7 +431,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
                 Value: <span className="text-green-400 font-bold">${wonItem.price.toFixed(2)}</span>
             </p>
             
-            {/* 結果畫面：只有在「沒有自動開箱」的時候才顯示按鈕 */}
+            {/* 1.正常模式顯示 */}
             {!isAutoRunning && (
                 <div className="flex gap-4 justify-center">
                     <button onClick={resetGame} className="bg-blue-600 hover:bg-blue-500 text-white text-lg font-bold px-10 py-4 rounded shadow-lg transition transform hover:scale-105 hover:shadow-blue-500/25">
@@ -443,7 +443,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
                 </div>
             )}
             
-            {/* 自動模式中顯示提示 */}
+            {/* 2.自動模式顯示 */}
             {isAutoRunning && (
                 <div className="text-center">
                     <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-green-500 rounded-full mb-2" role="status"></div>

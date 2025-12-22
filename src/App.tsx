@@ -33,15 +33,13 @@ export default function App() {
     fetchCrates();
   }, []);
 
-  // ★ 1. 定義登入邏輯 (統一管理)
+  // 1. 定義登入邏輯 
   const googleLogin = useGoogleLogin({
      onSuccess: async (tokenResponse) => {
         console.log("Login Success", tokenResponse);
-        // 為了讓 Navbar 和 Storage 都知道是誰，這裡設定完整的測試 User
-        // (實際專案中你可以在這裡用 token 去後端換 user info)
         setUser({
             name: "Test User", 
-            email: "test@example.com", // 加回 email 以防萬一
+            email: "test@example.com", 
             picture: "" 
         });
      },
@@ -60,7 +58,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-800 text-slate-100 font-sans">
-      {/* Navbar 會監聽 user 狀態，當 googleLogin 成功 -> setUser -> Navbar 更新 */}
       <Navbar 
         user={user} 
         login={() => googleLogin()} 
@@ -102,7 +99,6 @@ export default function App() {
         {currentView === 'storage' && (
             <Storage 
                 user={user} 
-                // ★ 2. 這裡傳下去的 login 必須是上面的 googleLogin
                 login={() => googleLogin()} 
             />
         )}

@@ -1,3 +1,5 @@
+// 資料庫寫入
+
 import mongoose from 'mongoose';
 import axios from 'axios';
 import dotenv from 'dotenv';
@@ -25,29 +27,28 @@ const RARITY_MAP: Record<string, string> = {
 
 const connectDB = async () => {
   if (!process.env.MONGODB_URI) {
-    console.error('❌ MONGODB_URI is missing in .env.local');
+    console.error('MONGODB_URI is missing in .env.local');
     process.exit(1);
   }
   await mongoose.connect(process.env.MONGODB_URI);
-  console.log('📦 MongoDB Connected');
+  console.log('MongoDB Connected');
 };
 
 const seed = async () => {
   try {
     await connectDB();
 
-    console.log('🧹 Clearing old data...');
-    // 這裡建議清空，因為 Schema 結構變了 (name 不再 unique)
+    console.log('Clearing old data...');
     await Skin.deleteMany({});
     await Crate.deleteMany({});
 
     try {
         await Skin.collection.dropIndexes();
-        console.log('🧹 Indexes dropped (to allow duplicate names for phases).');
+        console.log('Indexes dropped (to allow duplicate names for phases).');
     } catch (error) {
-        console.log('⚠️ No indexes to drop or collection not found, skipping.');
+        console.log('No indexes to drop or collection not found, skipping.');
     }
-    console.log('📡 Fetching data from APIs...');
+    console.log('Fetching data from APIs...');
     const [skinsRes, cratesRes, pricesRes] = await Promise.all([
       axios.get(API_SKINS),
       axios.get(API_CRATES),
@@ -58,10 +59,9 @@ const seed = async () => {
     const rawCrates = cratesRes.data;
     const rawPrices = pricesRes.data;
 
-    console.log(`✅ Fetched ${rawSkins.length} skins and ${rawCrates.length} crates.`);
-    console.log('🔄 Processing Skins...');
+    console.log(`Fetched ${rawSkins.length} skins and ${rawCrates.length} crates.`);
+    console.log('Processing Skins...');
 
-    // 用來對照 API ID -> MongoDB _id
     const skinMap = new Map();
     let savedSkinsCount = 0;
 
@@ -74,12 +74,12 @@ const seed = async () => {
 
       if (!hasWeaponObj && !isKnife && !isGlove) continue;
 
-      // 2. 稀有度映射 (處理物件結構)
-      // Mykel API 的 rarity 結構通常是 { id, name, color }
+      // 2. 稀有度映射 
       const hexColor = item.rarity?.color;
-      const rarityColor = RARITY_MAP[hexColor] || 'blue'; // 預設藍色防呆
+      const rarityColor = RARITY_MAP[hexColor] || 'blue'; 
       
-      // 3. 價格匹配 (增強版，支援 Phase)
+      // 3. 價格 
+      /* ------------(not in use)------------- */
       const prices: any = {};
       const conditions = {
         FN: 'Factory New', MW: 'Minimal Wear', FT: 'Field-Tested',
@@ -87,17 +87,13 @@ const seed = async () => {
       };
 
       for (const [code, fullName] of Object.entries(conditions)) {
-        // 嘗試組合 1: 標準名稱 "Butterfly Knife | Gamma Doppler (Factory New)"
         let lookupKey = `${item.name} (${fullName})`;
         
-        // 嘗試組合 2: 如果有 Phase，嘗試 "Butterfly Knife | Gamma Doppler Phase 1 (Factory New)"
-        // 注意：有些價格網會把 Phase 寫在名稱後面
+
         if (item.phase && rawPrices[`${item.name} ${item.phase} (${fullName})`]) {
             lookupKey = `${item.name} ${item.phase} (${fullName})`;
         } else if (rawPrices[lookupKey]) {
-            // 維持原樣
         } else {
-            // 嘗試組合 3: 針對刀子移除 "★ "
             const cleanName = item.name.replace('★ ', '');
             if (rawPrices[`★ ${cleanName} (${fullName})`]) lookupKey = `★ ${cleanName} (${fullName})`;
             else if (rawPrices[`${cleanName} (${fullName})`]) lookupKey = `${cleanName} (${fullName})`;
@@ -107,36 +103,34 @@ const seed = async () => {
             prices[code] = Number(rawPrices[lookupKey]);
         }
       }
+      /* ------------(not in use)------------- */
 
       const skinDoc = {
-        id: item.id, // ★ 存入 API 的原始 ID
+        id: item.id, 
         name: item.name,
         weapon: item.weapon?.name || (isKnife ? 'Knife' : 'Glove'), 
         skinName: item.pattern?.name || 'Vanilla', 
         rarity: rarityColor,
         imageUrl: item.image,
-        phase: item.phase || null, // ★ 存入 Phase
+        phase: item.phase || null, 
         minFloat: item.min_float || 0,
         maxFloat: item.max_float || 1,
         isSpecial: isKnife || isGlove || rarityColor === 'gold',
         prices: prices
       };
 
-      // ★ 關鍵修改：使用 { id: item.id } 作為查詢條件
-      // 這樣 "skin-phase1" 和 "skin-emerald" 即使 name 一樣，也會被視為不同資料
       const savedSkin = await Skin.findOneAndUpdate(
         { id: item.id }, 
         skinDoc,
         { upsert: true, new: true }
       );
       
-      // 建立映射：API ID -> MongoDB _id
       skinMap.set(item.id, savedSkin._id);
       savedSkinsCount++;
     }
 
-    console.log(`✅ Skins processed. Actually saved: ${savedSkinsCount} items (Phases are now separate!).`);
-    console.log('🔄 Processing Crates...');
+    console.log(`Skins processed. Actually saved: ${savedSkinsCount} items (Phases are now separate!).`);
+    console.log('Processing Crates...');
 
     // --- 2. 處理 Crates ---
     let cratesCount = 0;
@@ -147,10 +141,7 @@ const seed = async () => {
         const containsIds = [];
         const specialIds = [];
 
-        // 普通物品
         for (const content of box.contains) {
-            // Mykel API 的 crate.contains 裡面是 { id: "skin-xxxx", ... }
-            // 因為我們上面用 item.id 存了所有的 Skin (包含 Phase)，這裡直接找就能找到對應的 Phase
             const dbId = skinMap.get(content.id);
             if (dbId) {
                 if (!containsIds.some(id => id.toString() === dbId.toString())) {
@@ -159,7 +150,7 @@ const seed = async () => {
             }
         }
         
-        // 特殊物品 (Rare)
+        // Rare item
         if (box.contains_rare) {
              for (const special of box.contains_rare) {
                  const dbId = skinMap.get(special.id);
@@ -183,11 +174,11 @@ const seed = async () => {
         cratesCount++;
     }
 
-    console.log(`🎉 Successfully seeded ${cratesCount} crates!`);
+    console.log(`Successfully seeded ${cratesCount} crates!`);
     process.exit(0);
 
   } catch (error) {
-    console.error('❌ Seeding Failed:', error);
+    console.error('Seeding Failed:', error);
     process.exit(1);
   }
 };

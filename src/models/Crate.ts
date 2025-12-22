@@ -1,3 +1,4 @@
+//處理箱子數據
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import type { ISkin } from './Skin';
 

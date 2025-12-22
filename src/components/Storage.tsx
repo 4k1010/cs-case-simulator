@@ -10,7 +10,7 @@ interface InventoryItem extends Skin {
 
 interface StorageProps {
   user: any;
-  login: () => void; // 這是從 App.tsx 傳進來的觸發函式
+  login: () => void; 
 }
 
 export default function Storage({ user, login }: StorageProps) {
@@ -57,7 +57,7 @@ export default function Storage({ user, login }: StorageProps) {
   const totalValue = inventory.reduce((sum, item) => sum + (item.price || 0), 0);
   const totalSpent = 0; 
 
-  // 情況 A：未登入
+  // 未登入
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
@@ -65,7 +65,6 @@ export default function Storage({ user, login }: StorageProps) {
           <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
           <p className="text-slate-400 mb-6">請先登入以查看庫存。</p>
           
-          {/* ★ 按下這裡會觸發 App.tsx 的 googleLogin -> setUser -> Navbar 更新 */}
           <button 
             onClick={login} 
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
@@ -77,7 +76,7 @@ export default function Storage({ user, login }: StorageProps) {
     );
   }
 
-  // 情況 B：已登入
+  // 已登入
   return (
     <div className="animate-fade-in w-full">
       <div className="flex justify-between items-center mb-6">
