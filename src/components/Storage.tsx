@@ -62,7 +62,7 @@ export default function Storage({ user, login }: StorageProps) {
     setClearing(true);
     try {
         const userId = user?.name || "TEST_USER";
-        await axios.delete('${API_BASE_URL}/api/inventory', { data: { userId } });
+        await axios.delete(`${API_BASE_URL}/api/inventory`, { data: { userId } });
         setInventory([]);
     } catch (error) {
         alert("Failed to clear inventory");
