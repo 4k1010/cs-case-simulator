@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { type Skin } from "../types"; 
 import { API_BASE_URL } from '../../config.ts';
 
 interface RealInventoryItem {

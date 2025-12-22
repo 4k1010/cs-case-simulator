@@ -9,27 +9,35 @@ interface Props {
   onFinish: () => void;
 }
 
+const RARITY_COLORS: Record<string, string> = {
+    white: '#b0c3d9',
+    lightblue: '#5e98d9',
+    blue: '#4b69ff',
+    purple: '#8847ff',
+    pink: '#d32ce6',
+    red: '#eb4b4b',
+    gold: '#e4ae39',
+};
+
+const getRarityColor = (rarity: any) => {
+    const name = (rarity?.id || rarity?.name || rarity || 'blue').toLowerCase();   
+    
+    if (name.includes('consumer')) return RARITY_COLORS.white;
+    if (name.includes('industrial')) return RARITY_COLORS.lightblue;
+    if (name.includes('mil-spec')) return RARITY_COLORS.blue;
+    if (name.includes('restricted')) return RARITY_COLORS.purple;
+    if (name.includes('classified')) return RARITY_COLORS.pink;
+    if (name.includes('covert')) return RARITY_COLORS.red;
+    if (name.includes('gold') || name.includes('contraband')) return RARITY_COLORS.gold;
+    
+    return RARITY_COLORS[name] || RARITY_COLORS.blue;
+};
+
 export default function RollingAnimation({ items, winnerIndex, isRolling, onFinish }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bgTrackRef = useRef<HTMLDivElement>(null);
   const lensTrackRef = useRef<HTMLDivElement>(null);
   const rollSoundRef = useRef<HTMLAudioElement | null>(null);
-
-  const rarityBorderColors: Record<string, string> = {
-    blue: 'border-blue-500',
-    purple: 'border-purple-500',
-    pink: 'border-pink-500',
-    red: 'border-red-500',
-    gold: 'border-yellow-400',
-  };
-
-  const rarityBgColors: Record<string, string> = {
-    blue: 'bg-blue-500',
-    purple: 'bg-purple-500',
-    pink: 'bg-pink-500',
-    red: 'bg-red-500',
-    gold: 'bg-yellow-400',
-  };
 
   /* 計算輪盤動畫 */
   useLayoutEffect(() => {
@@ -51,7 +59,6 @@ export default function RollingAnimation({ items, winnerIndex, isRolling, onFini
     let lastPlayedIndex = -1;
 
     const ctx = gsap.context(() => {
-      // 強制歸零
       gsap.set([bgTrackRef.current, lensTrackRef.current], { x: 0 });
       gsap.to([bgTrackRef.current, lensTrackRef.current], {
         x: targetX,
@@ -62,7 +69,6 @@ export default function RollingAnimation({ items, winnerIndex, isRolling, onFini
             const currentX = gsap.getProperty(bgTrackRef.current, "x") as number;
             const currentIndex = Math.floor(Math.abs(currentX) / TOTAL_ITEM_WIDTH);
 
-            // 輪盤音效
             if (currentIndex > lastPlayedIndex) {
                 if (rollSoundRef.current) {
                     const sound = rollSoundRef.current.cloneNode() as HTMLAudioElement;
@@ -81,33 +87,33 @@ export default function RollingAnimation({ items, winnerIndex, isRolling, onFini
 
 
   /* 輪盤卡片 */
-  const WeaponCard = ({ skin, isLens = false }: { skin: Skin, isLens?: boolean }) => (
-    <div className={`
-        flex-shrink-0 
-        w-[320px] h-[230px]
-        bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] 
-        border-b-[4px] ${rarityBorderColors[skin.rarity] || 'border-gray-500'}
-        relative shadow-lg overflow-hidden
-        ${isLens ? 'brightness-110' : ''}
-    `}>
-        <div className={`absolute inset-0 opacity-20 ${rarityBgColors[skin.rarity] || 'bg-gray-500'}`} />
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-            <img 
-                src={skin.imageUrl} 
-                alt={skin.name}
-                className="w-[100%] h-[100%] object-contain drop-shadow-md transform scale-105" 
-            />
+  const WeaponCard = ({ skin, isLens = false }: { skin: Skin, isLens?: boolean }) => {
+    // 取得顏色
+    const color = getRarityColor(skin.rarity);
+    const imgSrc = skin.image;
+
+    return (
+        <div className={`
+            flex-shrink-0 
+            w-[320px] h-[230px]
+            bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] 
+            border-b-[4px]
+            relative shadow-lg overflow-hidden
+            ${isLens ? 'brightness-110' : ''}
+        `}
+        style={{ borderColor: color }}
+        >
+            <div className="absolute inset-0 opacity-20" style={{ backgroundColor: color }} />
+            <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                <img 
+                    src={imgSrc} 
+                    alt={skin.name}
+                    className="w-[100%] h-[100%] object-contain drop-shadow-md transform scale-105" 
+                />
+            </div>
         </div>
-        {/* <div className="absolute bottom-3 left-4 z-10 leading-tight">
-            <div className="text-[12px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">
-            {skin.name.split(' | ')[0]}
-            </div>
-            <div className="text-lg text-gray-100 font-bold truncate max-w-[280px]">
-            {skin.name.split(' | ')[1]}
-            </div>
-        </div> */}
-    </div>
-  );
+    );
+  };
 
   return (
     <div ref={containerRef} className="relative w-full h-[45rem] flex items-center justify-center overflow-hidden">

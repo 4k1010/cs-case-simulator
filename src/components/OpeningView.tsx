@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { type Crate, type Skin } from "../types";
+import { type Crate, type Skin, type RarityInfo } from "../types";
 import RollingAnimation from "./RollingAnimation";
-import { API_BASE_URL } from '../../config';
+import { API_BASE_URL } from '../../config'; 
 
 interface Props {
   crate: Crate;
@@ -9,51 +9,46 @@ interface Props {
   onBack: () => void;
 }
 
-// 金色問號
-const MYSTERY_ITEM: Skin = {
-    id: "mystery",
-    name: "★ Rare Special Item",
-    rarity: "gold", 
-    price: 0,
-    minFloat: 0,
-    maxFloat: 0,
-    imageUrl: "https://pbs.twimg.com/media/GL_87gsXQAA6NRs.png", 
-    isSpecial: true,
-    weapon: "Special",
-    skinName: "Item"
+// 稀有度對照表
+const RARITY_MAP: Record<string, { color: string, name: string }> = {
+    white: { color: 'bg-slate-300', name: 'Consumer Grade' },
+    lightblue: { color: 'bg-sky-400', name: 'Industrial Grade' },
+    blue: { color: 'bg-blue-600', name: 'Mil-Spec Grade' },
+    purple: { color: 'bg-purple-600', name: 'Restricted' },
+    pink: { color: 'bg-pink-500', name: 'Classified' },
+    red: { color: 'bg-red-600', name: 'Covert' },
+    gold: { color: 'bg-yellow-400', name: 'Rare Special Item' },
 };
 
-const RARITY_BG_COLORS: Record<string, string> = {
-  white: 'bg-slate-300 shadow-slate-300/50',
-  lightblue: 'bg-sky-400 shadow-sky-400/50',
-  blue: 'bg-blue-600 shadow-blue-600/50',
-  purple: 'bg-purple-600 shadow-purple-600/50',
-  pink: 'bg-pink-500 shadow-pink-500/50',
-  red: 'bg-red-600 shadow-red-600/50',
-  gold: 'bg-yellow-400 shadow-yellow-400/50',
+// 將字串轉為 RarityInfo 物件
+const createRarityObj = (rarityStr: string | RarityInfo): RarityInfo => {
+    if (typeof rarityStr !== 'string') return rarityStr; 
+    const key = rarityStr?.toLowerCase() || 'blue';
+    const mapped = RARITY_MAP[key] || RARITY_MAP['blue'];
+    return {
+        id: key,
+        name: mapped.name,
+        color: key 
+    };
 };
 
-const RARITY_TEXT_COLORS: Record<string, string> = {
-  white: 'text-slate-300',
-  lightblue: 'text-sky-400',
-  blue: 'text-blue-400',
-  purple: 'text-purple-400',
-  pink: 'text-pink-400',
-  red: 'text-red-500',
-  gold: 'text-yellow-400',
+const getRarityBg = (rarity: RarityInfo | string) => {
+    const rName = (typeof rarity === 'string' ? rarity : rarity.id).toLowerCase();
+    return RARITY_MAP[rName]?.color || 'bg-blue-600';
 };
 
-const getRarityBg = (rarity: string) => {
-    return RARITY_BG_COLORS[rarity]?.split(' ')[0] || 'bg-gray-500';
+const getRarityTextColor = (rarity: RarityInfo) => {
+    const rName = rarity.id.toLowerCase();
+    const colors: Record<string, string> = {
+        blue: 'text-blue-400',
+        purple: 'text-purple-400',
+        pink: 'text-pink-400',
+        red: 'text-red-500',
+        gold: 'text-yellow-400',
+    };
+    return colors[rName] || 'text-white';
 };
 
-const getConditionCode = (wear: number) => {
-    if (wear < 0.07) return "FN";
-    if (wear < 0.15) return "MW";
-    if (wear < 0.38) return "FT";
-    if (wear < 0.45) return "WW";
-    return "BS";
-};
 
 const getWearLabel = (wear: number) => {
   if (wear < 0.07) return "Factory New";
@@ -63,25 +58,42 @@ const getWearLabel = (wear: number) => {
   return "Battle-Scarred";
 };
 
-const fetchPrice = (wear: number, prices?: Record<string, number>) => {
-    if (!prices) return 0;
-    const code = getConditionCode(wear);
-    return prices[code] || 0;
-};
+// 輪盤填充邏輯
+const getRandomFiller = (rawItems: any[]) => {
+    const getRarityStr = (item: any) => (item.rarity?.id || item.rarity?.name || item.rarity || 'blue').toLowerCase();
 
-// 輪盤隨機填充邏輯
-const getRandomFiller = (allSkins: Skin[]) => {
-    const lowTierSkins = allSkins.filter(s => ['white', 'lightblue', 'blue'].includes(s.rarity));
-    const midTierSkins = allSkins.filter(s => ['purple', 'pink'].includes(s.rarity));
-    const highTierSkins = allSkins.filter(s => ['red'].includes(s.rarity));
-    
-    const fallbackSkins = allSkins;
-    const pick = (pool: Skin[]) => pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : fallbackSkins[Math.floor(Math.random() * fallbackSkins.length)];
+    const common = rawItems.filter(i => ['white', 'gray', 'lightblue', 'blue'].includes(getRarityStr(i))); // 軍規/工業/消費
+    const uncommon = rawItems.filter(i => ['purple'].includes(getRarityStr(i))); // 受限
+    const rare = rawItems.filter(i => ['pink'].includes(getRarityStr(i)));       // 保密
+    const legendary = rawItems.filter(i => ['red'].includes(getRarityStr(i)));   // 隱密
 
     const rand = Math.random();
-    if (rand < 0.9) return pick(lowTierSkins);
-    if (rand < 0.97) return pick(midTierSkins);
-    return pick(highTierSkins);
+    let pool = common;
+
+    if (common.length > 0 && rand < 0.85) {
+        pool = common;      
+    } else if (uncommon.length > 0 && rand < 0.95) {
+        pool = uncommon;    
+    } else if (rare.length > 0 && rand < 0.99) {
+        pool = rare;       
+    } else if (legendary.length > 0) {
+        pool = legendary;   
+    } else {
+        pool = rawItems;    
+    }
+
+    if (pool.length === 0) pool = rawItems;
+    return pool[Math.floor(Math.random() * pool.length)];
+};
+
+// 金色問號
+const MYSTERY_ITEM: Skin = {
+    id: "mystery",
+    name: "★ Rare Special Item",
+    rarity: { id: 'gold', name: 'Rare Special Item', color: 'gold' },
+    price: 0,
+    wear: 0,
+    image: "https://pbs.twimg.com/media/GL_87gsXQAA6NRs.png", 
 };
 
 type GameState = 'ready' | 'unlocking' | 'rolling' | 'won';
@@ -93,9 +105,8 @@ export default function OpeningView({ crate, user, onBack }: Props) {
   const [winnerIndex, setWinnerIndex] = useState(0);
   const [wonWear, setWonWear] = useState<number>(0);
 
-  // 自動開箱控制
-  const [isAutoOpen, setIsAutoOpen] = useState(false);      // Checkbox 狀態
-  const [isAutoRunning, setIsAutoRunning] = useState(false); // 是否正在執行自動循環
+  const [isAutoOpen, setIsAutoOpen] = useState(false);
+  const [isAutoRunning, setIsAutoRunning] = useState(false);
 
   const unlockAudioRef = useRef<HTMLAudioElement | null>(null);
   const dropAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -113,20 +124,18 @@ export default function OpeningView({ crate, user, onBack }: Props) {
     };
   }, []);
 
-  // 中獎畫面等2.5秒reset
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     if (gameState === 'won' && isAutoRunning) {
         timer = setTimeout(() => {
             resetGame();
-        }, 2500); // 2.5sec delay
+        }, 2500);
     }
     return () => clearTimeout(timer);
   }, [gameState, isAutoRunning]);
 
-  // 開箱循環
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     if (gameState === 'ready' && isAutoRunning) {
         timer = setTimeout(() => {
             startUnlockSequence();
@@ -158,7 +167,8 @@ export default function OpeningView({ crate, user, onBack }: Props) {
         const minAnimationTime = new Promise(resolve => setTimeout(resolve, 2650));
         
         const userId = user?.name || "TEST_USER";
-        const apiCall = fetch('${API_BASE_URL}/api/open', {
+         
+        const apiCall = fetch(`${API_BASE_URL}/api/open`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -171,21 +181,23 @@ export default function OpeningView({ crate, user, onBack }: Props) {
 
         if (data.error) throw new Error(data.error);
 
-        const { wonItem: apiWonItem } = data;
+        const rawItem = data.wonItem;
+        const convertedWonItem: Skin = {
+            id: rawItem._id || rawItem.id,
+            name: rawItem.name,
 
-        const finalWear = apiWonItem.wear || 0;
-        const finalPrice = fetchPrice(finalWear, apiWonItem.prices);
-        
-        const finalWinner: Skin = {
-            ...apiWonItem,
-            price: finalPrice,
-            wear: finalWear
+            image: rawItem.imageUrl || rawItem.image, 
+            rarity: createRarityObj(rawItem.rarity), 
+            price: rawItem.price || 0,
+            wear: rawItem.wear || 0,
+            phase: rawItem.phase,
+            paint_index: rawItem.paint_index
         };
 
-        setWonItem(finalWinner);
-        setWonWear(finalWear);
+        setWonItem(convertedWonItem);
+        setWonWear(convertedWonItem.wear || 0);
         
-        const winnerRarity = finalWinner.rarity;
+        const winnerRarityId = convertedWonItem.rarity.id;
 
         const generatedItems: Skin[] = [];
         const WINNER_POS = 50; 
@@ -193,13 +205,20 @@ export default function OpeningView({ crate, user, onBack }: Props) {
 
         for (let i = 0; i < TOTAL_ITEMS; i++) {
             if (i === WINNER_POS) {
-                if (winnerRarity === 'gold' || finalWinner.isSpecial) {
+                if (winnerRarityId === 'gold' || (rawItem as any).isSpecial) {
                     generatedItems.push({ ...MYSTERY_ITEM, _uniqueId: `win-${i}` });
                 } else {
-                    generatedItems.push({ ...finalWinner, _uniqueId: `win-${i}` });
+                    generatedItems.push({ ...convertedWonItem, _uniqueId: `win-${i}` });
                 }
             } else {
-                const filler = getRandomFiller(crate.contains || []);
+                const randomRaw = getRandomFiller(crate.contains);
+                const filler: Skin = {
+                    id: randomRaw.id || randomRaw._id,
+                    name: randomRaw.name,
+                    image: randomRaw.imageUrl || randomRaw.image,
+                    rarity: createRarityObj(randomRaw.rarity),
+                    price: 0
+                };
                 generatedItems.push({ ...filler, _uniqueId: `fill-${i}-${filler.id}` });
             }
         }
@@ -216,21 +235,31 @@ export default function OpeningView({ crate, user, onBack }: Props) {
     }
   };
 
-
-  // win sound control
-  const handleRollFinish = () => {
+const handleRollFinish = () => {
     if (wonItem) {
+        const rId = (typeof wonItem.rarity === 'string' 
+            ? wonItem.rarity 
+            : wonItem.rarity?.id || 'blue'
+        ).toLowerCase();
+        const isGoldItem = 
+            rId === 'gold' || 
+            (wonItem as any).isSpecial || 
+            wonItem.name.includes('★'); 
+
         let soundFile = "/sounds/drop2.mp3"; 
-        
-        if (wonItem.isSpecial || wonItem.rarity === 'gold') {
+
+        if (isGoldItem) {
              soundFile = "/sounds/drop6.mp3"; 
         } else {
-            switch (wonItem.rarity) {
+            switch (rId) {
                 case 'purple': soundFile = "/sounds/drop3.mp3"; break;
                 case 'pink':   soundFile = "/sounds/drop4.mp3"; break;
                 case 'red':    soundFile = "/sounds/drop5.mp3"; break;
             }
         }
+
+        console.log(`[Sound] Name: ${wonItem.name}, Rarity: ${rId}, IsGold: ${isGoldItem}, Playing: ${soundFile}`);
+
         dropAudioRef.current = new Audio(soundFile);
         dropAudioRef.current.volume = 0.3;
         dropAudioRef.current.play().catch(e => console.log("Drop audio failed", e));
@@ -249,7 +278,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
     setWonWear(0);
   };
   
-  const wonItemRarity = wonItem ? wonItem.rarity : 'blue';
+  const wonItemRarity = wonItem ? wonItem.rarity : { id: 'blue', name: 'Mil-Spec', color: 'blue' };
 
   return (
     <div className="fixed top-16 bottom-0 left-0 right-0 z-40 flex flex-col items-center justify-center w-full overflow-hidden font-sans bg-black">
@@ -257,7 +286,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
       {/* 1. background */}
       <div className="absolute inset-0 z-0 bg-black">
         <img 
-          src="..\public\photo\dust2.webp"
+          src="/photo/dust2.webp" 
           alt="Map Background" 
           className={`
                 w-full h-full object-cover
@@ -298,14 +327,27 @@ export default function OpeningView({ crate, user, onBack }: Props) {
                 <p className="text-slate-300 text-sm font-bold tracking-widest uppercase mb-4 text-left border-b border-slate-600/50 pb-2">Contains one of the following:</p>
                 <div className="flex flex-wrap justify-center gap-2 max-h-[40vh] overflow-y-auto p-4 custom-scrollbar">
                     
-                    {Array.isArray(crate.contains) && crate.contains.map((skin: Skin) => {
-                        const isGold = skin.rarity === 'gold';
-                        const imgSrc = skin.imageUrl; 
-                        const displayName = skin.skinName || skin.name.split(' | ')[1] || skin.name;
-                        const weaponName = skin.weapon || skin.name.split(' | ')[0];
+                    {Array.isArray(crate.contains) && crate.contains.map((rawSkin: any) => {
+                        const skin: Skin = {
+                            id: rawSkin.id || rawSkin._id,
+                            name: rawSkin.name,
+                            image: rawSkin.imageUrl || rawSkin.image,
+                            rarity: createRarityObj(rawSkin.rarity)
+                        };
+
+                        const isGold = skin.rarity.id === 'gold';
+                        const imgSrc = skin.image; 
+                        
+                        let displayName = skin.name;
+                        let weaponName = skin.name;
+                        if (skin.name.includes('|')) {
+                            const parts = skin.name.split(' | ');
+                            weaponName = parts[0];
+                            displayName = parts[1];
+                        }
 
                         return (
-                          <div key={skin._uniqueId || skin.id} className="flex flex-col w-40 shadow-lg group cursor-default transition-transform duration-200 hover:scale-[1.02]">
+                          <div key={skin.id} className="flex flex-col w-40 shadow-lg group cursor-default transition-transform duration-200 hover:scale-[1.02]">
                               <div className={`w-full aspect-[4/3] ${isGold ? 'bg-[#b78700]' : 'bg-[#6a6a6a]'} flex items-center justify-center relative overflow-hidden`}>
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
                                   <img src={imgSrc} alt={skin.name} className="w-full h-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:scale-105" />
@@ -322,7 +364,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
                     <div className="flex flex-col w-40 shadow-lg group cursor-default transition-transform duration-200 hover:scale-[1.02]">
                         <div className="w-full aspect-[4/3] bg-[#b78700] flex items-center justify-center relative overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                            <img src={MYSTERY_ITEM.imageUrl} alt="Rare Special Item" className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(255,215,0,0.6)] opacity-90 transition-transform duration-300 group-hover:scale-105" />
+                            <img src={MYSTERY_ITEM.image} alt="Rare Special Item" className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(255,215,0,0.6)] opacity-90 transition-transform duration-300 group-hover:scale-105" />
                         </div>   
                         <div className="w-full h-[4px] bg-yellow-400"></div>
                         <div className="w-full bg-transparent px-1 py-2 flex flex-col justify-center min-h-[45px]">
@@ -336,7 +378,6 @@ export default function OpeningView({ crate, user, onBack }: Props) {
 
       {/* 4. unbox button */}
       <div className={`absolute bottom-12 right-12 z-20 flex flex-col items-end gap-3 transition-all duration-500`}>
-            
             <div className={`
                 flex items-center gap-2 bg-black/60 px-4 py-2 rounded backdrop-blur-sm border border-slate-700 transition-all duration-300
                 ${(gameState === 'ready' && !isAutoRunning) ? 'opacity-100' : 'opacity-0 pointer-events-none'}
@@ -353,9 +394,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
                 </label>
             </div>
 
-            {/* buttton status */}
             {isAutoRunning ? (
-                // stop button
                 <button 
                     onClick={stopAutoOpen} 
                     className="group relative bg-red-600 hover:bg-red-500 text-white text-xl font-bold py-6 px-12 rounded shadow-[0_10px_30px_rgba(255,0,0,0.3)] transition-all transform hover:scale-105 active:scale-95 border-b-4 border-red-800 hover:border-red-700 flex flex-col items-center min-w-[280px]"
@@ -364,7 +403,6 @@ export default function OpeningView({ crate, user, onBack }: Props) {
                     <span className="text-sm font-normal text-red-100 opacity-90">Click to stop sequence</span>
                 </button>
             ) : (
-                // normal open button
                 <button 
                     onClick={startUnlockSequence} 
                     disabled={gameState !== 'ready'} 
@@ -391,15 +429,15 @@ export default function OpeningView({ crate, user, onBack }: Props) {
       {gameState === 'won' && wonItem && (
         <div className="relative z-20 flex flex-col items-center justify-center w-full max-w-2xl animate-scale-in-bounce">
             
-            <h1 className={`text-4xl md:text-5xl font-black mb-6 text-center drop-shadow-lg whitespace-nowrap ${RARITY_TEXT_COLORS[wonItemRarity] || 'text-white'}`}>
+            <h1 className={`text-4xl md:text-5xl font-black mb-6 text-center drop-shadow-lg whitespace-nowrap ${getRarityTextColor(wonItemRarity)}`}>
               {wonItem.name} {wonItem.phase && <span className="text-2xl opacity-80 block md:inline md:ml-2">({wonItem.phase})</span>}
             </h1>
 
-            <div className={`h-1.5 w-full max-w-lg mb-20 rounded-full ${RARITY_BG_COLORS[wonItemRarity] || 'bg-gray-500'}`} />
+            <div className={`h-1.5 w-full max-w-lg mb-20 rounded-full ${getRarityBg(wonItemRarity)}`} />
             
             <div className="relative w-100 h-80 mx-auto mb-20">
-                <div className={`absolute inset-0 bg-${wonItemRarity === 'gold' ? 'yellow' : wonItemRarity}-500/40 blur-[60px] rounded-full animate-pulse`}></div>
-                <img src={wonItem.imageUrl} className="w-full h-full object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform scale-110" />
+                <div className={`absolute inset-0 ${getRarityBg(wonItemRarity).replace('bg-', 'bg-').replace('600', '500')}/40 blur-[60px] rounded-full animate-pulse`}></div>
+                <img src={wonItem.image} className="w-full h-full object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform scale-110" />
             </div>
 
             <div className="w-full max-w-[500px] mb-8 animate-fade-in-up">
@@ -421,18 +459,14 @@ export default function OpeningView({ crate, user, onBack }: Props) {
                     <div 
                         className="absolute top-0 bottom-0 w-0.5 bg-white shadow-[0_0_4px_rgba(255,255,255,0.8)] z-10 transition-all duration-1000 ease-out"
                         style={{ left: `${wonWear * 100}%` }}
-                    >
-                         <div className="absolute -top-1.5 -left-[3px] w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-white"></div>
-                         <div className="absolute -bottom-1.5 -left-[3px] w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[6px] border-b-white"></div>
-                    </div>
+                    />
                 </div>
             </div>
           
             <p className="text-xl text-slate-300 font-mono mb-10 bg-black/40 px-6 py-2 rounded backdrop-blur-sm border border-slate-700">
-                Value: <span className="text-green-400 font-bold">NT${wonItem.price.toFixed(2)}</span>
+                Value: <span className="text-green-400 font-bold">NT${wonItem.price?.toFixed(2)}</span>
             </p>
             
-            {/* 1.正常模式顯示 */}
             {!isAutoRunning && (
                 <div className="flex gap-4 justify-center">
                     <button onClick={resetGame} className="bg-blue-600 hover:bg-blue-500 text-white text-lg font-bold px-10 py-4 rounded shadow-lg transition transform hover:scale-105 hover:shadow-blue-500/25">
@@ -444,7 +478,6 @@ export default function OpeningView({ crate, user, onBack }: Props) {
                 </div>
             )}
             
-            {/* 2.自動模式顯示 */}
             {isAutoRunning && (
                 <div className="text-center">
                     <div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-green-500 rounded-full mb-2" role="status"></div>
