@@ -1,15 +1,11 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-// 雖然 types.ts 定義不同，但我們這裡會用 as any 或自定義介面來接 API 的真實資料
 import { type Skin } from "../types"; 
 
-// 1. 重新定義介面以符合 Mongoose 回傳的真實資料
 interface RealInventoryItem {
   inventoryId: string;
   name: string;
-  // 資料庫回傳的是 imageUrl，不是 image
   imageUrl: string; 
-  // 資料庫回傳的是字串 ('blue', 'red'...)，不是物件
   rarity: string; 
   price?: number;
   cost?: number;
@@ -22,26 +18,23 @@ interface StorageProps {
   login: () => void; 
 }
 
-// 2. 顏色對照表 (Key 必須對應 Skin.ts 的 enum: white, lightblue, blue, etc.)
 const RARITY_BG_COLORS: Record<string, string> = {
-  white: 'bg-slate-400',      // Consumer (Database 存 white)
-  gray: 'bg-slate-400',       // 相容舊資料
-  lightblue: 'bg-sky-400',    // Industrial
-  blue: 'bg-blue-600',        // Mil-Spec
-  purple: 'bg-purple-600',    // Restricted
-  pink: 'bg-pink-500',        // Classified
-  red: 'bg-red-600',          // Covert
-  gold: 'bg-yellow-400',      // Special
+  white: 'bg-slate-400',      
+  gray: 'bg-slate-400',       
+  lightblue: 'bg-sky-400',   
+  blue: 'bg-blue-600',        
+  purple: 'bg-purple-600',    
+  pink: 'bg-pink-500',        
+  red: 'bg-red-600',          
+  gold: 'bg-yellow-400',      
 };
 
-// 3. 簡化後的 Helper：直接用資料庫存的顏色字串來對應
 const getRarityBg = (rarity: string) => {
   const r = rarity ? rarity.toLowerCase() : 'blue';
   return RARITY_BG_COLORS[r] || 'bg-blue-600';
 };
 
 export default function Storage({ user, login }: StorageProps) {
-  // 使用 RealInventoryItem 來接收資料
   const [inventory, setInventory] = useState<RealInventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -53,7 +46,6 @@ export default function Storage({ user, login }: StorageProps) {
       try {
         const userId = user.name || "TEST_USER"; 
         const res = await axios.get(`/api/inventory?userId=${userId}`);
-        // 直接將回傳資料存入，API 欄位應為: inventoryId, imageUrl, rarity(string), name...
         setInventory(res.data);
       } catch (error) {
         console.error("Failed to load inventory", error);
@@ -132,10 +124,7 @@ export default function Storage({ user, login }: StorageProps) {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
             {inventory.map((item) => {
               
-              // ★ 修正 1: 資料庫欄位是 imageUrl
               const imgSrc = item.imageUrl;
-              
-              // ★ 修正 2: 資料庫欄位是 rarity (字串)，例如 "red", "blue"
               const rarityString = item.rarity || 'blue';
               const isGold = rarityString === 'gold';
               const rarityBgClass = getRarityBg(rarityString);
