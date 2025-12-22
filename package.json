@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "ts-node server.ts",
-    "start": "ts-node server.ts"
+    "start": "ts-node --esm server.ts"
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.2",
