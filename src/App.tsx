@@ -14,6 +14,20 @@ export default function App() {
   const [crates, setCrates] = useState<Crate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+
+  // 檢查登入資訊 
+  useEffect(() => {
+    const storedUser = localStorage.getItem('cs_user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse stored user");
+        localStorage.removeItem('cs_user');
+      }
+    }
+  }, []);
+
   // 載入真實箱子資料
   useEffect(() => {
     const fetchCrates = async () => {
@@ -37,18 +51,22 @@ export default function App() {
   const googleLogin = useGoogleLogin({
      onSuccess: async (tokenResponse) => {
         console.log("Login Success", tokenResponse);
-        setUser({
+        const newUser = {
             name: "Test User", 
-            email: "test@example.com", 
+            email: "test@example.com",
             picture: "" 
-        });
+        };
+        setUser(newUser);
+        // 儲存到瀏覽器
+        localStorage.setItem('cs_user', JSON.stringify(newUser));
      },
      onError: () => console.log('Login Failed'),
   });
 
   const logout = () => {
       setUser(null);
-      setCurrentView('cases'); // 登出後跳回首頁
+      localStorage.removeItem('cs_user');
+      setCurrentView('cases');
   };
 
   const handleCrateClick = (crate: Crate) => {
@@ -87,7 +105,7 @@ export default function App() {
                         </div>
                         <div className="text-center">
                             <h3 className="text-sm font-medium text-slate-200 group-hover:text-yellow-400 truncate">{crate.name}</h3>
-                            <p className="text-xs text-slate-500 mt-1">${crate.price.toFixed(2)}</p>
+                            <p className="text-xs text-slate-500 mt-1">NT${crate.price.toFixed(2)}</p>
                         </div>
                         </div>
                     ))}

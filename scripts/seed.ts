@@ -4,8 +4,8 @@ import mongoose from 'mongoose';
 import axios from 'axios';
 import dotenv from 'dotenv';
 
-import Crate from '../src/models/Crate';
-import Skin from '../src/models/Skin';
+import Crate from '../src/models/Crate.ts';
+import Skin from '../src/models/Skin.ts';
 
 dotenv.config({ path: '.env.local' });
 
@@ -25,6 +25,50 @@ const RARITY_MAP: Record<string, string> = {
   '#e4ae39': 'gold',       // Contraband / Special
 };
 
+const MANUAL_CRATE_PRICES: Record<string, number> = {
+  "CS:GO Weapon Case": 2885.39,
+  "eSports 2013 Case": 1719.63,
+  "Operation Bravo Case": 1323.47,
+  "CS:GO Weapon Case 2": 401.52,
+  "eSports 2013 Winter Case": 353.58,
+  "Winter Offensive Weapon Case": 238.46,
+  "Operation Phoenix Weapon Case": 121.75,
+  "CS:GO Weapon Case 3": 274.73,
+  "Operation Breakout Weapon Case": 270.00,
+  "eSports 2014 Summer Case": 369.04,
+  "Huntsman Weapon Case": 257.07,
+  "Operation Vanguard Weapon Case": 131.85,
+  "Chroma Case": 158.34,
+  "Chroma 2 Case": 132.48,
+  "Falchion Case": 43.22,
+  "Shadow Case": 47.95,
+  "Revolver Case": 91.79,
+  "Operation Wildfire Case": 95.57,
+  "Chroma 3 Case": 123.00,
+  "Gamma Case": 163.07,
+  "Gamma 2 Case": 145.73,
+  "Glove Case": 756.05,
+  "Spectrum Case": 103.78,
+  "Operation Hydra Case": 1365.11,
+  "Spectrum 2 Case": 55.40,
+  "Clutch Case": 23.35,
+  "Horizon Case": 45.74,
+  "Danger Zone Case": 38.17,
+  "Prisma Case": 41.32,
+  "Shattered Web Case": 194.30,
+  "CS20 Case": 32.81,
+  "Prisma 2 Case": 41.64,
+  "Fracture Case": 14.51,
+  "Operation Broken Fang Case": 233.73,
+  "Snakebite Case": 18.61,
+  "Operation Riptide Case": 473.75,
+  "Dreams & Nightmares Case": 39.75,
+  "Recoil Case": 7.89,
+  "Revolution Case": 8.21,
+  "Kilowatt Case": 6.00,
+  "Gallery Case": 38.49,
+  "Fever Case": 22.08
+};
 const connectDB = async () => {
   if (!process.env.MONGODB_URI) {
     console.error('MONGODB_URI is missing in .env.local');
@@ -79,7 +123,7 @@ const seed = async () => {
       const rarityColor = RARITY_MAP[hexColor] || 'blue'; 
       
       // 3. 價格 
-      /* ------------(not in use)------------- */
+      /* ------------(not used)------------- */
       const prices: any = {};
       const conditions = {
         FN: 'Factory New', MW: 'Minimal Wear', FT: 'Field-Tested',
@@ -103,7 +147,7 @@ const seed = async () => {
             prices[code] = Number(rawPrices[lookupKey]);
         }
       }
-      /* ------------(not in use)------------- */
+      /* ------------(not used)------------- */
 
       const skinDoc = {
         id: item.id, 
@@ -164,9 +208,12 @@ const seed = async () => {
 
         if (containsIds.length === 0) continue;
 
+        const customPrice = MANUAL_CRATE_PRICES[box.name];
+        const finalPrice = customPrice !== undefined ? customPrice : 2.49;
+
         await Crate.create({
             name: box.name,
-            price: 2.49,
+            price: finalPrice,
             imageUrl: box.image,
             contains: containsIds,
             specialItems: specialIds

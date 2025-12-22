@@ -373,7 +373,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
                     `}
                 >
                     <span className="text-2xl tracking-wider">{gameState === 'unlocking' ? 'UNLOCKING...' : 'UNLOCK CONTAINER'}</span>
-                    <span className="text-sm font-normal text-green-100 opacity-90">${crate.price?.toFixed(2) || '2.49'}</span>
+                    <span className="text-sm font-normal text-green-100 opacity-90">NT${crate.price?.toFixed(2) || '2.49'}</span>
                 </button>
             )}
       </div>
@@ -428,7 +428,7 @@ export default function OpeningView({ crate, user, onBack }: Props) {
             </div>
           
             <p className="text-xl text-slate-300 font-mono mb-10 bg-black/40 px-6 py-2 rounded backdrop-blur-sm border border-slate-700">
-                Value: <span className="text-green-400 font-bold">${wonItem.price.toFixed(2)}</span>
+                Value: <span className="text-green-400 font-bold">NT${wonItem.price.toFixed(2)}</span>
             </p>
             
             {/* 1.正常模式顯示 */}

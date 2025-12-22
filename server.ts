@@ -13,7 +13,10 @@ const app = express();
 const PORT = 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*', 
+    credentials: true
+}));
 app.use(express.json());
 
 // 資料庫連線
@@ -48,36 +51,113 @@ app.post('/api/open', async (req, res) => {
         return;
     }
 
-    // --- 機率與抽獎邏輯  ---
-    const isGoldTest = Math.random() < 0.99; 
-    const targetRarity = isGoldTest ? 'gold' : 'blue';
+    /* --- 出金99%測試start  --- */
+    // const isGoldTest = Math.random() < 0.99; 
+    // const targetRarity = isGoldTest ? 'gold' : 'blue';
 
-    let pool = (crate.contains as any[]).filter(s => s.rarity === targetRarity);
+    // let pool = (crate.contains as any[]).filter(s => s.rarity === targetRarity);
 
-    if (pool.length === 0) {
-        if (targetRarity === 'gold') {
-             if (crate.specialItems && crate.specialItems.length > 0) {
-                 await crate.populate('specialItems');
-                 pool = crate.specialItems as any[];
-             } else {
-                 pool = (crate.contains as any[]).filter(s => s.rarity === 'red');
-             }
-        }
-        if (pool.length === 0) pool = crate.contains as any[];
+    // if (pool.length === 0) {
+    //     if (targetRarity === 'gold') {
+    //          if (crate.specialItems && crate.specialItems.length > 0) {
+    //              await crate.populate('specialItems');
+    //              pool = crate.specialItems as any[];
+    //          } else {
+    //              pool = (crate.contains as any[]).filter(s => s.rarity === 'red');
+    //          }
+    //     }
+    //     if (pool.length === 0) pool = crate.contains as any[];
+    // }
+    /* --- 出金99%測試end  --- */
+
+    /* --- 全部機率20%start --- */
+    const roll = Math.random();
+    let targetRarity = 'blue'; // 預設藍色
+
+    if (roll > 0.8) {
+        targetRarity = 'gold';
+    } else if (roll > 0.6) {
+        targetRarity = 'red';
+    } else if (roll > 0.4) {
+        targetRarity = 'pink';
+    } else if (roll > 0.2) {
+        targetRarity = 'purple';
+    } else {
+        targetRarity = 'blue';
     }
+
+    let pool: any[] = [];
+
+    // if gold
+    if (targetRarity === 'gold') {
+        if (crate.specialItems && crate.specialItems.length > 0) {
+            await crate.populate('specialItems');
+            pool = crate.specialItems as any[];
+        } else {
+            // if no gold then red
+            targetRarity = 'red';
+        }
+    }
+    if (pool.length === 0) {
+        pool = (crate.contains as any[]).filter(s => s.rarity === targetRarity);
+    }
+    if (pool.length === 0) {
+        pool = crate.contains as any[];
+    }
+    /* --- 全部機率20%end --- */
+
+    /* --- 正常機率抽取start --- */
+    // const roll = Math.random();
+    // let targetRarity = 'blue'; // 預設藍色
+
+    // if (roll > 0.9974) {
+    //     targetRarity = 'gold';
+    // } else if (roll > 0.9910) {
+    //     targetRarity = 'red';
+    // } else if (roll > 0.9590) {
+    //     targetRarity = 'pink';
+    // } else if (roll > 0.7992) {
+    //     targetRarity = 'purple';
+    // } else {
+    //     targetRarity = 'blue';
+    // }
+
+    // let pool: any[] = [];
+
+    // // if gold
+    // if (targetRarity === 'gold') {
+    //     if (crate.specialItems && crate.specialItems.length > 0) {
+    //         await crate.populate('specialItems');
+    //         pool = crate.specialItems as any[];
+    //     } else {
+    //         // if no gold then red
+    //         targetRarity = 'red';
+    //     }
+    // }
+    // if (pool.length === 0) {
+    //     pool = (crate.contains as any[]).filter(s => s.rarity === targetRarity);
+    // }
+    // if (pool.length === 0) {
+    //     pool = crate.contains as any[];
+    // }
+    /* --- 正常機率抽取end --- */
 
     const wonItem = pool[Math.floor(Math.random() * pool.length)];
     const wear = Math.random() * (wonItem.maxFloat - wonItem.minFloat) + wonItem.minFloat;
 
     // 結果存入 Inventory 
     if (wonItem && wonItem._id) {
+
+        const cratePrice = crate.price || 2.49;
         await Inventory.create({
             userId: targetUserId,
-            skin: wonItem._id
+            skin: wonItem._id,
+            cost: cratePrice
         });
-        console.log(`[Server] Saved ${wonItem.name} for user: ${targetUserId}`);
+        console.log(`[Server] Saved ${wonItem.name} for user: ${targetUserId} (Cost: ${cratePrice})`);
     }
 
+    // 隨機輪盤卡片
     const spinItems = [];
     const allItems = crate.contains as any[];
     for (let i = 0; i < 60; i++) {
@@ -116,7 +196,8 @@ app.get('/api/inventory', async (req, res) => {
             return {
                 inventoryId: item._id,
                 ...item.skin._doc, // 展開 Skin 資料
-                acquiredAt: item.acquiredAt
+                acquiredAt: item.acquiredAt,
+                cost: item.cost
             };
         }).filter(i => i !== null);
 
