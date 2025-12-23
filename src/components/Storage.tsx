@@ -34,21 +34,24 @@ const getRarityBg = (rarity: string) => {
   return RARITY_BG_COLORS[r] || 'bg-blue-600';
 };
 
+  /* -----------------demo測試用-------------------- */
 export default function Storage({ user, login }: StorageProps) {
+  const [isTestMode, setIsTestMode] = useState(false);
+
+  const currentUserId = user?.email || (isTestMode ? "TEST_USER" : null);
+
   const [inventory, setInventory] = useState<RealInventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
+    if (!currentUserId) return;
+    
     const fetchInventory = async () => {
-      if (!user) return;
       setLoading(true);
       try {
-        const userId = user.email || user.name || "TEST_USER"; 
-        
-        console.log("Fetching inventory for:", userId); 
-
-        const res = await axios.get(`${API_BASE_URL}/api/inventory?userId=${userId}`);
+        console.log("Fetching inventory for:", currentUserId); 
+        const res = await axios.get(`${API_BASE_URL}/api/inventory?userId=${currentUserId}`);
         setInventory(res.data);
       } catch (error) {
         console.error("Failed to load inventory", error);
@@ -58,14 +61,13 @@ export default function Storage({ user, login }: StorageProps) {
     };
 
     fetchInventory();
-  }, [user]);
+  }, [currentUserId]);
 
   const handleClear = async () => {
     if (!confirm("Are you sure you want to clear your ENTIRE inventory?")) return;
     setClearing(true);
     try {
-        const userId = user?.email || user?.name || "TEST_USER";
-        await axios.delete(`${API_BASE_URL}/api/inventory`, { data: { userId } });
+        await axios.delete(`${API_BASE_URL}/api/inventory`, { data: { userId: currentUserId } });
         setInventory([]);
     } catch (error) {
         alert("Failed to clear inventory");
@@ -79,17 +81,94 @@ export default function Storage({ user, login }: StorageProps) {
   const profit = totalValue - totalSpent;
   const isProfit = profit >= 0;
 
-  if (!user) {
+  if (!currentUserId) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
         <div className="bg-slate-700/50 p-8 rounded-2xl border border-slate-600 max-w-md w-full">
           <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
           <p className="text-slate-400 mb-6">請先登入以查看庫存。</p>
-          <button onClick={login} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all">Login with Google</button>
+          
+          <div className="flex flex-col gap-3">
+            <button onClick={login} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all">
+                Login with Google
+            </button>
+            <button 
+                onClick={() => setIsTestMode(true)} 
+                className="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-lg transition-all border border-gray-500"
+            >
+                Test Mode (Demo Bypass)
+            </button>
+          </div>
         </div>
       </div>
     );
   }
+  /* -----------------demo測試用-------------------- */
+
+  /* -----------------原程式-------------------- */
+// export default function Storage({ user, login }: StorageProps) {
+
+//   const [isTestMode, setIsTestMode] = useState(false);
+
+//   const activeUser = user || (isTestMode ? { name: "Test User", email: "TEST_USER" } : null);
+
+//   const [inventory, setInventory] = useState<RealInventoryItem[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const [clearing, setClearing] = useState(false);
+
+//   useEffect(() => {
+//     const fetchInventory = async () => {
+
+//       if (!activeUser) return;
+//       //if (!user) return;
+//       setLoading(true);
+//       try {
+//         const userId = user.email || user.name || "TEST_USER"; 
+        
+//         console.log("Fetching inventory for:", userId); 
+
+//         const res = await axios.get(`${API_BASE_URL}/api/inventory?userId=${userId}`);
+//         setInventory(res.data);
+//       } catch (error) {
+//         console.error("Failed to load inventory", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchInventory();
+//   }, [user]);
+
+//   const handleClear = async () => {
+//     if (!confirm("Are you sure you want to clear your ENTIRE inventory?")) return;
+//     setClearing(true);
+//     try {
+//         const userId = user?.email || user?.name || "TEST_USER";
+//         await axios.delete(`${API_BASE_URL}/api/inventory`, { data: { userId } });
+//         setInventory([]);
+//     } catch (error) {
+//         alert("Failed to clear inventory");
+//     } finally {
+//         setClearing(false);
+//     }
+//   };
+  // const totalValue = inventory.reduce((sum, item) => sum + (item.price || 0), 0);
+  // const totalSpent = inventory.reduce((sum, item) => sum + (item.cost || 2.49), 0); 
+  // const profit = totalValue - totalSpent;
+  // const isProfit = profit >= 0;
+
+  // if (!user) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
+  //       <div className="bg-slate-700/50 p-8 rounded-2xl border border-slate-600 max-w-md w-full">
+  //         <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
+  //         <p className="text-slate-400 mb-6">請先登入以查看庫存。</p>
+  //         <button onClick={login} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all">Login with Google</button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+  /* -----------------原程式-------------------- */
 
   return (
     <div className="animate-fade-in w-full">
