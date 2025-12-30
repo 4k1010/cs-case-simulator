@@ -19,18 +19,14 @@ interface NavbarProps {
 
 export default function Navbar({ user, login, logout, currentView, setView, probabilities, setProbabilities }: NavbarProps) {
     const [showSettings, setShowSettings] = useState(false);
-    
-    // 本地暫存設定 (避免打字時一直觸發全域更新)
     const [tempProbs, setTempProbs] = useState<RarityProbs>(probabilities);
 
-    // 當外部 probabilities 改變時，同步更新內部
     useEffect(() => {
         setTempProbs(probabilities);
     }, [probabilities]);
 
-    // 計算總和
     const total = Object.values(tempProbs).reduce((a, b) => a + Number(b), 0);
-    const isValid = Math.abs(total - 100) < 0.01; // 容許些微浮點數誤差
+    const isValid = Math.abs(total - 100) < 0.01; 
 
     const handleChange = (key: keyof RarityProbs, value: string) => {
         setTempProbs(prev => ({
@@ -50,7 +46,7 @@ export default function Navbar({ user, login, logout, currentView, setView, prob
 
     const handleReset = () => {
         setTempProbs(DEFAULT_PROBS);
-        setProbabilities(DEFAULT_PROBS); // 直接套用
+        setProbabilities(DEFAULT_PROBS);
     };
 
     return (

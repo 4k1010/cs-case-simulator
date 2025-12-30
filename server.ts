@@ -51,7 +51,7 @@ app.post('/api/open', async (req, res) => {
         return;
     }
 
-    /* --- 動態機率邏輯 Start --- */
+    /* --- 動態機率邏輯 --- */
     
     // 定義機率介面 (預設值: 官方機率 %)
     const defaultProbs = {
@@ -99,43 +99,6 @@ app.post('/api/open', async (req, res) => {
     if (pool.length === 0) {
         pool = crate.contains as any[];
     }
-    /* --- 全部機率20%end --- */
-
-    /* --- 正常機率抽取start --- */
-    // const roll = Math.random();
-    // let targetRarity = 'blue'; // 預設藍色
-
-    // if (roll > 0.9974) {
-    //     targetRarity = 'gold';
-    // } else if (roll > 0.9910) {
-    //     targetRarity = 'red';
-    // } else if (roll > 0.9590) {
-    //     targetRarity = 'pink';
-    // } else if (roll > 0.7992) {
-    //     targetRarity = 'purple';
-    // } else {
-    //     targetRarity = 'blue';
-    // }
-
-    // let pool: any[] = [];
-
-    // // if gold
-    // if (targetRarity === 'gold') {
-    //     if (crate.specialItems && crate.specialItems.length > 0) {
-    //         await crate.populate('specialItems');
-    //         pool = crate.specialItems as any[];
-    //     } else {
-    //         // if no gold then red
-    //         targetRarity = 'red';
-    //     }
-    // }
-    // if (pool.length === 0) {
-    //     pool = (crate.contains as any[]).filter(s => s.rarity === targetRarity);
-    // }
-    // if (pool.length === 0) {
-    //     pool = crate.contains as any[];
-    // }
-    /* --- 正常機率抽取end --- */
 
     const wonItem = pool[Math.floor(Math.random() * pool.length)];
     const wear = Math.random() * (wonItem.maxFloat - wonItem.minFloat) + wonItem.minFloat;
