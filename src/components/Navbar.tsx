@@ -85,7 +85,7 @@ export default function Navbar({ user, login, logout, currentView, setView, prob
                             <span>Probabilities</span>
                             </button>
                             <a
-                                href="https://drive.google.com/file/d/1MxiU63D_CRoKGyDMDBJNUkOvn0k2yAUF/view?usp=sharing" 
+                                href="https://www.canva.com/design/DAG8QVLRk6M/QpQ5aHnC6cWdE7oBjMk3-w/view?utm_content=DAG8QVLRk6M&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h0e8ab46869" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="px-3 py-2 rounded-md text-sm font-medium transition text-slate-300 hover:bg-slate-800 cursor-pointer"
