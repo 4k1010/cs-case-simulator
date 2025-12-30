@@ -14,12 +14,30 @@ interface UserProfile {
   picture: string;
 }
 
+export interface RarityProbs {
+    gold: number;
+    red: number;
+    pink: number;
+    purple: number;
+    blue: number;
+}
+
+// Official default probabilities
+export const DEFAULT_PROBS: RarityProbs = {
+    gold: 0.26,
+    red: 0.64,
+    pink: 3.2,
+    purple: 15.98,
+    blue: 79.92
+};
+
 export default function App() {
   const [currentView, setCurrentView] = useState('cases'); 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [selectedCrate, setSelectedCrate] = useState<Crate | null>(null);
   const [crates, setCrates] = useState<Crate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [probabilities, setProbabilities] = useState<RarityProbs>(DEFAULT_PROBS);
 
   // 1. 初始化檢查 localStorage
   useEffect(() => {
@@ -95,6 +113,8 @@ export default function App() {
         logout={logout}
         currentView={currentView}
         setView={setCurrentView}
+        probabilities={probabilities}
+        setProbabilities={setProbabilities}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -138,6 +158,7 @@ export default function App() {
                 crate={selectedCrate} 
                 user={user} 
                 onBack={() => setCurrentView('cases')} 
+                customProbabilities={probabilities}
             />
         )}
       </main>

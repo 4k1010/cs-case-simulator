@@ -7,6 +7,7 @@ interface Props {
   crate: Crate;
   user: any;
   onBack: () => void;
+  customProbabilities?: any; 
 }
 
 // 稀有度對照表
@@ -98,7 +99,7 @@ const MYSTERY_ITEM: Skin = {
 
 type GameState = 'ready' | 'unlocking' | 'rolling' | 'won';
 
-export default function OpeningView({ crate, user, onBack }: Props) {
+export default function OpeningView({ crate, user, onBack, customProbabilities }: Props) {
   const [gameState, setGameState] = useState<GameState>('ready');
   const [items, setItems] = useState<Skin[]>([]); 
   const [wonItem, setWonItem] = useState<Skin | null>(null);
@@ -173,7 +174,8 @@ export default function OpeningView({ crate, user, onBack }: Props) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 crateId: crate.id,
-                userId: userId
+                userId: userId,
+                probabilities: customProbabilities
             })
         }).then(res => res.json());
 

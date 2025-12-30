@@ -39,7 +39,8 @@ app.get('/api/crates', async (req, res) => {
 
 app.post('/api/open', async (req, res) => {
   try {
-    const { crateId, userId } = req.body; 
+    // 1. 接收 probabilities 參數
+    const { crateId, userId, probabilities } = req.body; 
     const targetUserId = userId || "TEST_USER"; 
 
     let crate = await Crate.findOne({ _id: crateId }).populate('contains');
@@ -50,36 +51,31 @@ app.post('/api/open', async (req, res) => {
         return;
     }
 
-    /* --- 出金99%測試start  --- */
-    // const isGoldTest = Math.random() < 0.99; 
-    // const targetRarity = isGoldTest ? 'gold' : 'blue';
+    /* --- 動態機率邏輯 Start --- */
+    
+    // 定義機率介面 (預設值: 官方機率 %)
+    const defaultProbs = {
+        gold: 0.26,
+        red: 0.64,
+        pink: 3.2,
+        purple: 15.98,
+        blue: 79.92
+    };
 
-    // let pool = (crate.contains as any[]).filter(s => s.rarity === targetRarity);
+    const probs = probabilities || defaultProbs;
 
-    // if (pool.length === 0) {
-    //     if (targetRarity === 'gold') {
-    //          if (crate.specialItems && crate.specialItems.length > 0) {
-    //              await crate.populate('specialItems');
-    //              pool = crate.specialItems as any[];
-    //          } else {
-    //              pool = (crate.contains as any[]).filter(s => s.rarity === 'red');
-    //          }
-    //     }
-    //     if (pool.length === 0) pool = crate.contains as any[];
-    // }
-    /* --- 出金99%測試end  --- */
-
-    /* --- 全部機率20%start --- */
-    const roll = Math.random();
-    let targetRarity = 'blue'; // 預設藍色
-
-    if (roll > 0.8) {
+    const roll = Math.random() * 100;
+    
+    let targetRarity = 'blue';
+    let cumulative = 0;
+  
+    if (roll < (cumulative += Number(probs.gold))) {
         targetRarity = 'gold';
-    } else if (roll > 0.6) {
+    } else if (roll < (cumulative += Number(probs.red))) {
         targetRarity = 'red';
-    } else if (roll > 0.4) {
+    } else if (roll < (cumulative += Number(probs.pink))) {
         targetRarity = 'pink';
-    } else if (roll > 0.2) {
+    } else if (roll < (cumulative += Number(probs.purple))) {
         targetRarity = 'purple';
     } else {
         targetRarity = 'blue';
