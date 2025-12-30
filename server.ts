@@ -106,13 +106,14 @@ app.post('/api/open', async (req, res) => {
     // 結果存入 Inventory 
     if (wonItem && wonItem._id) {
 
-        const cratePrice = crate.price || 2.49;
+        const KEY_PRICE = 75; 
+        const totalCost = (crate.price || 2.49) + KEY_PRICE;
         await Inventory.create({
             userId: targetUserId,
             skin: wonItem._id,
-            cost: cratePrice
+            cost: totalCost
         });
-        console.log(`[Server] Saved ${wonItem.name} for user: ${targetUserId} (Cost: ${cratePrice})`);
+        console.log(`[Server] Saved ${wonItem.name} for user: ${targetUserId} (Cost: ${totalCost})`);
     }
 
     // 隨機輪盤卡片
