@@ -106,7 +106,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-800 text-slate-100 font-sans">
+    <div className="min-h-screen bg-slate-800 text-slate-100">
       <Navbar 
         user={user} 
         login={() => googleLogin()} 
@@ -120,7 +120,18 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {currentView === 'cases' && (
             <>
-                <h2 className="text-2xl font-bold mb-6 text-yellow-400">Select Case</h2>
+            {/* 背景 */}
+            <div className="fixed inset-0 z-0 bg-black">
+              <img 
+                src="/photo/dust2.webp" 
+                alt="Background" 
+                className="w-full h-full object-cover blur-[100px] opacity-90"
+              />
+              <div className="absolute inset-0 bg-black/70"></div>
+            </div>
+
+            <div className="relative z-10">
+                <h2 className="text-2xl font-bold mb-6 text-yellow-400">Containers</h2>
                 {isLoading ? (
                     <div className="text-center text-slate-400 py-20">Loading Cases...</div>
                 ) : (
@@ -129,20 +140,22 @@ export default function App() {
                         <div 
                             key={crate.id} 
                             onClick={() => handleCrateClick(crate)}
-                            className="bg-slate-700/50 border border-slate-600 rounded-lg p-4 hover:bg-slate-700 hover:scale-105 hover:border-yellow-500 transition-all cursor-pointer group"
+                            className="bg-slate-700/50 border border-slate-600 hover:bg-slate-700 hover:scale-105 hover:border-yellow-500 transition-all cursor-pointer group"
                         >
                         <div className="aspect-square flex items-center justify-center mb-4 relative">
                             <div className="absolute inset-0 bg-yellow-500/0 group-hover:bg-yellow-500/20 blur-xl transition-all rounded-full" />
                             <img src={crate.imageUrl} alt={crate.name} className="w-full h-full object-contain relative z-10 drop-shadow-xl" />
                         </div>
-                        <div className="text-center">
-                            <h3 className="text-sm font-medium text-slate-200 group-hover:text-yellow-400 truncate">{crate.name}</h3>
-                            <p className="text-xs text-slate-500 mt-1">NT${crate.price.toFixed(2)}</p>
+                        <div className={`w-full h-[4px] bg-slate-300`}></div>
+                        <div className="w-full bg-transparent flex flex-col p-2 justify-center min-h-[45px]">
+                            <div className="text-sm text-white font-extrabold truncate leading-tight">{crate.name}</div>
+                            <div className="text-[12px] text-white-400 uppercase tracking-wider leading-tight">NT${crate.price.toFixed(2)}</div>
                         </div>
                         </div>
                     ))}
                     </div>
                 )}
+              </div>
             </>
         )}
 

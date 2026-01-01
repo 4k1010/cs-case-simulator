@@ -37,12 +37,18 @@ export default function RollingAnimation({ items, winnerIndex, isRolling, onFini
   const containerRef = useRef<HTMLDivElement>(null);
   const bgTrackRef = useRef<HTMLDivElement>(null);
   const lensTrackRef = useRef<HTMLDivElement>(null);
-  const rollSoundRef = useRef<HTMLAudioElement | null>(null);
+  const audioPoolRef = useRef<HTMLAudioElement[]>([]);
+  const audioIndexRef = useRef(0);
 
   /* 計算輪盤動畫 */
   useLayoutEffect(() => {
-    rollSoundRef.current = new Audio("/sounds/Roll.mp3");
-    rollSoundRef.current.volume = 0.4;
+    if (audioPoolRef.current.length === 0) {
+        for (let i = 0; i < 5; i++) {
+            const audio = new Audio("/sounds/Roll.mp3");
+            audio.volume = 0.4;
+            audioPoolRef.current.push(audio);
+        }
+    }
 
     if (!isRolling || !bgTrackRef.current || !lensTrackRef.current || !containerRef.current) return;
 
@@ -56,7 +62,7 @@ export default function RollingAnimation({ items, winnerIndex, isRolling, onFini
     // 計算位移量
     const targetX = -(distanceToWinner + randomOffset);
 
-    let lastPlayedIndex = -1;
+    let lastPlayedIndex = 0;
 
     const ctx = gsap.context(() => {
       gsap.set([bgTrackRef.current, lensTrackRef.current], { x: 0 });
@@ -70,10 +76,15 @@ export default function RollingAnimation({ items, winnerIndex, isRolling, onFini
             const currentIndex = Math.floor(Math.abs(currentX) / TOTAL_ITEM_WIDTH);
 
             if (currentIndex > lastPlayedIndex) {
-                if (rollSoundRef.current) {
-                    const sound = rollSoundRef.current.cloneNode() as HTMLAudioElement;
-                    sound.volume = 0.3; 
-                    sound.play().catch(() => {}); 
+                const pool = audioPoolRef.current;
+                const idx = audioIndexRef.current;
+                const audio = pool[idx];
+                
+                if (audio) {
+                    audio.currentTime = 0; // 重置時間
+                    audio.play().catch(() => {});
+                    // 切換到下一個音軌
+                    audioIndexRef.current = (idx + 1) % pool.length;
                 }
                 lastPlayedIndex = currentIndex;
             }
@@ -148,11 +159,11 @@ export default function RollingAnimation({ items, winnerIndex, isRolling, onFini
       </div>
 
       {/* Layer 3: 中央指針 */}
-      <div className="absolute top-[5%] bottom-[5%] left-1/2 -ml-[1px] w-[2px] bg-yellow-400 z-50 shadow-[0_0_15px_#fbbf24]"></div>
+      <div className="absolute top-[30%] bottom-[30%] left-1/2 -ml-[1px] w-[2px] bg-yellow-400 z-50 shadow-[0_0_15px_#fbbf24]"></div>
       
-      {/* 上下箭頭 */}
+      {/* 上下箭頭
       <div className="absolute top-[calc(50%-19rem)] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[16px] border-t-yellow-400 z-50"></div>
-      <div className="absolute bottom-[calc(50%-19rem)] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[16px] border-b-yellow-400 z-50"></div>
+      <div className="absolute bottom-[calc(50%-19rem)] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[16px] border-b-yellow-400 z-50"></div> */}
 
     </div>
   );

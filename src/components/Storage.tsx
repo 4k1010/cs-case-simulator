@@ -46,7 +46,6 @@ const getRarityBg = (rarity: string) => {
   return RARITY_BG_COLORS[r] || 'bg-blue-600';
 };
 
-  /* -----------------demo測試用-------------------- */
 export default function Storage({ user, login }: StorageProps) {
   const [isTestMode, setIsTestMode] = useState(false);
   const currentUserId = user?.email || (isTestMode ? "TEST_USER" : null);
@@ -93,6 +92,9 @@ export default function Storage({ user, login }: StorageProps) {
   const profit = totalValue - totalSpent;
   const isProfit = profit >= 0;
 
+  const roi = totalSpent > 0 ? (profit / totalSpent) * 100 : 0;
+  const isRoiPositive = roi >= 0;
+
   // 計算各品質數量
   const stats = useMemo(() => {
       const counts: Record<string, number> = { gold: 0, red: 0, pink: 0, purple: 0, blue: 0, lightblue: 0, white: 0 };     
@@ -132,6 +134,7 @@ export default function Storage({ user, login }: StorageProps) {
       });
   }, [inventory, sortType]);
 
+  // 登入檢查
   if (!currentUserId) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
@@ -147,189 +150,142 @@ export default function Storage({ user, login }: StorageProps) {
                 onClick={() => setIsTestMode(true)} 
                 className="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-lg transition-all border border-gray-500"
             >
-                Test Mode (Demo Bypass)
+                Login as Guest
             </button>
           </div>
         </div>
       </div>
     );
   }
-  /* -----------------demo測試用-------------------- */
-
-  /* -----------------原程式-------------------- */
-// export default function Storage({ user, login }: StorageProps) {
-
-//   const [isTestMode, setIsTestMode] = useState(false);
-
-//   const activeUser = user || (isTestMode ? { name: "Test User", email: "TEST_USER" } : null);
-
-//   const [inventory, setInventory] = useState<RealInventoryItem[]>([]);
-//   const [loading, setLoading] = useState(false);
-//   const [clearing, setClearing] = useState(false);
-
-//   useEffect(() => {
-//     const fetchInventory = async () => {
-
-//       if (!activeUser) return;
-//       //if (!user) return;
-//       setLoading(true);
-//       try {
-//         const userId = user.email || user.name || "TEST_USER"; 
-        
-//         console.log("Fetching inventory for:", userId); 
-
-//         const res = await axios.get(`${API_BASE_URL}/api/inventory?userId=${userId}`);
-//         setInventory(res.data);
-//       } catch (error) {
-//         console.error("Failed to load inventory", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchInventory();
-//   }, [user]);
-
-//   const handleClear = async () => {
-//     if (!confirm("Are you sure you want to clear your ENTIRE inventory?")) return;
-//     setClearing(true);
-//     try {
-//         const userId = user?.email || user?.name || "TEST_USER";
-//         await axios.delete(`${API_BASE_URL}/api/inventory`, { data: { userId } });
-//         setInventory([]);
-//     } catch (error) {
-//         alert("Failed to clear inventory");
-//     } finally {
-//         setClearing(false);
-//     }
-//   };
-  // const totalValue = inventory.reduce((sum, item) => sum + (item.price || 0), 0);
-  // const totalSpent = inventory.reduce((sum, item) => sum + (item.cost || 2.49), 0); 
-  // const profit = totalValue - totalSpent;
-  // const isProfit = profit >= 0;
-
-  // if (!user) {
-  //   return (
-  //     <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
-  //       <div className="bg-slate-700/50 p-8 rounded-2xl border border-slate-600 max-w-md w-full">
-  //         <h2 className="text-2xl font-bold text-white mb-2">Login Required</h2>
-  //         <p className="text-slate-400 mb-6">請先登入以查看庫存。</p>
-  //         <button onClick={login} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all">Login with Google</button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-  /* -----------------原程式-------------------- */
 
   return (
-    <div className="animate-fade-in w-full">
-      {/* 頂部標題與工具列 */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            物品庫 <span className="text-slate-400 text-sm">({inventory.length})</span>
-          </h2>
-          
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            {/* 排序選單 */}
-            <div className="text-white text-l">排序方式</div>
-            <select 
-                value={sortType}
-                onChange={(e) => setSortType(e.target.value as 'time' | 'rarity')}
-                className="bg-slate-700 text-white text-sm px-3 py-2 rounded border border-slate-600 focus:outline-none focus:border-blue-500"
-            >
-                <option value="time">獲得日期</option>
-                <option value="rarity">稀有度</option>
-            </select>
-
-            {inventory.length > 0 && (
-                <button onClick={handleClear} disabled={clearing} className="px-4 py-2 bg-red-900/50 border border-red-700 text-red-200 rounded hover:bg-red-800 transition disabled:opacity-50 text-sm flex items-center gap-2 whitespace-nowrap">
-                    {clearing ? "Clearing..." : "Clear All"}
-                </button>
-            )}
-          </div>
-      </div>
-      
-      {/* 財務儀表板 */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-slate-700/50 p-4 rounded-xl border border-slate-600">
-          <div className="text-slate-400 text-sm">庫存總價值</div>
-          <div className="text-2xl font-bold text-green-400">NT${totalValue.toFixed(2)}</div>
-        </div>
-        <div className="bg-slate-700/50 p-4 rounded-xl border border-slate-600">
-          <div className="text-slate-400 text-sm">總花費</div>
-          <div className="text-2xl font-bold text-red-400">-NT${totalSpent.toFixed(2)}</div>
-        </div>
-        <div className="bg-slate-700/50 p-4 rounded-xl border border-slate-600">
-          <div className="text-slate-400 text-sm">損益</div>
-          <div className={`text-2xl font-bold ${isProfit ? 'text-green-400' : 'text-red-400'}`}>
-            {isProfit ? '+' : ''}{profit.toFixed(2)}
-          </div>
-        </div>
+    <div className="min-h-screen w-full relative">
+      {/* 背景 */}
+      <div className="fixed inset-0 z-0 bg-black">
+        <img 
+          src="/photo/dust2.webp" 
+          alt="Background" 
+          className="w-full h-full object-cover blur-[100px] opacity-90"
+        />
+        <div className="absolute inset-0 bg-black/70"></div>
       </div>
 
-      {/* 品質統計條 */}
-      {inventory.length > 0 && (
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 mb-6 flex flex-wrap gap-4 text-sm font-mono">
-              <span className="text-slate-400 font-bold mr-2">STATS:</span>
-              <span className="text-yellow-400 drop-shadow-sm">Gold: {stats.gold || 0}</span>
-              <span className="text-red-500 drop-shadow-sm">Red: {stats.red || 0}</span>
-              <span className="text-pink-400 drop-shadow-sm">Pink: {stats.pink || 0}</span>
-              <span className="text-purple-400 drop-shadow-sm">Purple: {stats.purple || 0}</span>
-              <span className="text-blue-400 drop-shadow-sm">Blue: {stats.blue || 0}</span>
+      <div className="relative z-10 animate-fade-in w-full">
+        {/* 頂部標題與工具列 */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              Inventory <span className="text-slate-400 text-sm">({inventory.length})</span>
+            </h2>
+        </div>
+        
+        {/* 財務儀表板 */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="bg-slate-700/50 p-4 rounded border border-slate-600">
+            <div className="text-slate-400 text-sm">庫存總價值</div>
+            <div className="text-2xl font-bold text-green-400">NT${totalValue.toFixed(2)}</div>
           </div>
-      )}
-
-      {/* 物品列表 */}
-      {loading ? (
-          <div className="text-center text-slate-400 py-10">Loading Inventory...</div>
-      ) : inventory.length === 0 ? (
-          <div className="text-center py-20 border-2 border-dashed border-slate-700 rounded-xl text-slate-500">Empty Storage. Go open some cases!</div>
-      ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
-            {/* 使用 sortedInventory 來渲染 */}
-            {sortedInventory.map((item) => {                
-              const imgSrc = item.imageUrl;
-              const rarityString = item.rarity || 'blue';
-              const isGold = rarityString === 'gold';
-              const rarityBgClass = getRarityBg(rarityString);
-
-              // 拆解名稱
-              let weaponName = item.name;
-              let displayName = item.name;
-              if (item.name && item.name.includes('|')) {
-                  const parts = item.name.split(' | ');
-                  weaponName = parts[0];
-                  displayName = parts[1];
-              }
-
-              return (
-                <div key={item.inventoryId} className="flex flex-col shadow-lg group cursor-default transition-transform duration-200 hover:scale-[1.02] bg-[#222]">
-                    {/* 上半部：圖片區 */}
-                    <div className={`w-full aspect-[4/3] ${isGold ? 'bg-[#b78700]' : 'bg-[#6a6a6a]'} flex items-center justify-center relative overflow-hidden`}>
-                        <div className="w-90 h-90 absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                        <img 
-                            src={imgSrc} 
-                            alt={item.name} 
-                            className="w-full h-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:scale-105" 
-                        />
-                        <div className="absolute top-2 right-2 bg-black/60 px-1.5 py-0.5 rounded text-[10px] text-green-400 font-mono shadow-sm backdrop-blur-sm border border-white/10">
-                            ${item.price?.toFixed(2) || '0.00'}
-                        </div>
-                    </div>
-
-                    {/* 中間：稀有度條 */}
-                    <div className={`w-full h-[4px] ${rarityBgClass}`}></div>
-
-                    {/* 下半部：文字區 */}
-                    <div className="w-full bg-[#2a2a2a] px-2 py-2 flex flex-col justify-center min-h-[50px]">
-                        <div className="text-sm text-white font-extrabold truncate leading-tight">{weaponName}</div>
-                        <div className="text-[10px] text-gray-400 uppercase tracking-wider leading-tight truncate">{displayName}</div>
-                    </div>
-                </div>
-              );
-            })}
+          <div className="bg-slate-700/50 p-4 rounded border border-slate-600">
+            <div className="text-slate-400 text-sm">總花費</div>
+            <div className="text-2xl font-bold text-red-400">-NT${totalSpent.toFixed(2)}</div>
           </div>
-      )}
+          <div className="bg-slate-700/50 p-4 rounded border border-slate-600">
+            <div className="text-slate-400 text-sm">損益</div>
+            <div className={`text-2xl font-bold ${isProfit ? 'text-green-400' : 'text-red-400'}`}>
+              {isProfit ? '+' : ''}{profit.toFixed(2)}
+            </div>
+          </div>
+          <div className="bg-slate-700/50 p-4 rounded border border-slate-600">
+            <div className="text-slate-400 text-sm">ROI</div>
+            <div className={`text-2xl font-bold ${isRoiPositive ? 'text-green-400' : 'text-red-400'}`}>
+              {isRoiPositive ? '+' : ''}{roi.toFixed(2)}%
+            </div>
+          </div>
+        </div>
+
+        {/* 品質統計條 */}
+        {inventory.length > 0 && (
+            <div className="bg-slate-800/50 border border-slate-700 rounded p-3 mb-6 flex flex-wrap gap-4 text-sm ">
+                <span className="text-slate-400 font-bold mr-2">STATS:</span>
+                <span className="text-yellow-400 drop-shadow-sm">Gold: {stats.gold || 0}</span>
+                <span className="text-red-500 drop-shadow-sm">Red: {stats.red || 0}</span>
+                <span className="text-pink-400 drop-shadow-sm">Pink: {stats.pink || 0}</span>
+                <span className="text-purple-400 drop-shadow-sm">Purple: {stats.purple || 0}</span>
+                <span className="text-blue-400 drop-shadow-sm">Blue: {stats.blue || 0}</span>
+            </div>
+        )}
+        <div className="flex items-center justify-between mb-6 w-full">
+              {/* 排序選單 */}
+              <div className="flex items-center gap-3">
+                <span className="text-slate-400 font-bold">Sort by:</span>
+                <select 
+                    value={sortType}
+                    onChange={(e) => setSortType(e.target.value as 'time' | 'rarity')}
+                    className="bg-slate-700 text-white text-sm px-2 py-2 rounded border border-slate-600 focus:outline-none focus:border-blue-500"
+                >
+                    <option value="time">Newest</option>
+                    <option value="rarity">Quality</option>
+                </select>
+              </div>
+
+              {inventory.length > 0 && (
+                  <button onClick={handleClear} disabled={clearing} className="px-4 py-2 bg-red-600 font-bold text-white-400 rounded hover:bg-red-800 transition disabled:opacity-50 text-sm flex items-center gap-2 whitespace-nowrap">
+                      {clearing ? "Clearing..." : "Clear Inventory"}
+                  </button>
+              )}
+        </div>
+
+        {/* 物品列表 */}
+        {loading ? (
+            <div className="text-center text-slate-400 py-10">Loading Inventory...</div>
+        ) : inventory.length === 0 ? (
+            <div className="text-center py-20 border-2 border-dashed border-slate-700 rounded-xl text-slate-500">Empty Storage. Go open some cases!</div>
+        ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
+              {/* 使用 sortedInventory 來渲染 */}
+              {sortedInventory.map((item) => {                
+                const imgSrc = item.imageUrl;
+                const rarityString = item.rarity || 'blue';
+                const isGold = rarityString === 'gold';
+                const rarityBgClass = getRarityBg(rarityString);
+
+                // 拆解名稱
+                let weaponName = item.name;
+                let displayName = item.name;
+                if (item.name && item.name.includes('|')) {
+                    const parts = item.name.split(' | ');
+                    weaponName = parts[0];
+                    displayName = parts[1];
+                }
+
+                return (
+                  <div key={item.inventoryId} className="flex flex-col shadow-lg group cursor-default transition-transform duration-200 hover:scale-[1.02] bg-[#222]">
+                      {/* 上半部：圖片區 */}
+                      <div className={`w-full aspect-[4/3] ${isGold ? 'bg-[#b78700]' : 'bg-[#6a6a6a]'} flex items-center justify-center relative overflow-hidden`}>
+                          <div className="w-90 h-90 absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                          <img 
+                              src={imgSrc} 
+                              alt={item.name} 
+                              className="w-full h-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:scale-105" 
+                          />
+                          <div className="absolute top-2 right-2 bg-black/60 px-1.5 py-0.5 rounded text-[10px] text-green-400 font-mono shadow-sm backdrop-blur-sm border border-white/10">
+                              ${item.price?.toFixed(2) || '0.00'}
+                          </div>
+                      </div>
+
+                      {/* 中間：稀有度條 */}
+                      <div className={`w-full h-[4px] ${rarityBgClass}`}></div>
+
+                      {/* 下半部：文字區 */}
+                      <div className="w-full bg-[#2a2a2a] px-2 py-2 flex flex-col justify-center min-h-[50px]">
+                          <div className="text-sm text-white font-extrabold truncate leading-tight">{weaponName}</div>
+                          <div className="text-[10px] text-white-400 uppercase tracking-wider leading-tight truncate">{displayName}</div>
+                      </div>
+                  </div>
+                );
+              })}
+            </div>
+        )}
+      </div>
     </div>
   );
 }

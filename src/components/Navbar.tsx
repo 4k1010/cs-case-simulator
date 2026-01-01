@@ -64,29 +64,29 @@ export default function Navbar({ user, login, logout, currentView, setView, prob
                         <div className="flex items-baseline space-x-2">
                             <button 
                             onClick={() => setView('cases')}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition ${currentView === 'cases' ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+                            className={`px-3 py-2 rounded-md text-large font-medium transition ${currentView === 'cases' ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
                             >
-                            Cases
+                            CASES
                             </button>
                             <button 
                             onClick={() => setView('storage')}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition ${currentView === 'storage' ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+                            className={`px-3 py-2 rounded-md text-large font-medium font-medium transition ${currentView === 'storage' ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
                             >
-                            Storage
+                            INVENTORY
                             </button>
                             <button 
                             onClick={() => setShowSettings(!showSettings)}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition flex items-center gap-1 ${showSettings ? 'bg-yellow-500/20 text-yellow-400' : 'text-slate-300 hover:bg-slate-800'}`}
+                            className={`px-3 py-2 rounded-md text-large font-medium transition flex items-center gap-1 ${showSettings ? 'bg-yellow-500/20 text-yellow-400' : 'text-slate-300 hover:bg-slate-800'}`}
                             >
-                            <span>Probabilities</span>
+                            <span>PROBABILITIES</span>
                             </button>
                             <a
                                 href="https://www.canva.com/design/DAG8QVLRk6M/QpQ5aHnC6cWdE7oBjMk3-w/view?utm_content=DAG8QVLRk6M&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h0e8ab46869" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="px-3 py-2 rounded-md text-sm font-medium transition text-slate-300 hover:bg-slate-800 cursor-pointer"
+                                className="px-3 py-2 rounded-md text-large font-medium transition text-slate-300 hover:bg-slate-800 cursor-pointer"
                             >
-                            Documents
+                            DOCUMENTS
                             </a>
                         </div>
                     </div>
@@ -170,14 +170,14 @@ export default function Navbar({ user, login, logout, currentView, setView, prob
                             onClick={handleReset}
                             className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition"
                         >
-                            回復官方預設 (Reset)
+                            Reset to Official
                         </button>
                         <button 
                             onClick={handleSave}
                             disabled={!isValid}
                             className={`px-6 py-2 rounded font-bold transition ${isValid ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
                         >
-                            套用設定 (Apply)
+                            APPLY
                         </button>
                     </div>
                 </div>
