@@ -38,17 +38,17 @@ const getRarityBg = (rarity: RarityInfo | string) => {
     return RARITY_MAP[rName]?.color || 'bg-blue-600';
 };
 
-const getRarityTextColor = (rarity: RarityInfo) => {
-    const rName = rarity.id.toLowerCase();
-    const colors: Record<string, string> = {
-        blue: 'text-blue-400',
-        purple: 'text-purple-400',
-        pink: 'text-pink-400',
-        red: 'text-red-500',
-        gold: 'text-yellow-400',
-    };
-    return colors[rName] || 'text-white';
-};
+// const getRarityTextColor = (rarity: RarityInfo) => {
+//     const rName = rarity.id.toLowerCase();
+//     const colors: Record<string, string> = {
+//         blue: 'text-blue-400',
+//         purple: 'text-purple-400',
+//         pink: 'text-pink-400',
+//         red: 'text-red-500',
+//         gold: 'text-yellow-400',
+//     };
+//     return colors[rName] || 'text-white';
+// };
 
 
 const getWearLabel = (wear: number) => {
